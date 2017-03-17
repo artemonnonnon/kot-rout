@@ -94,7 +94,9 @@ fun monthsSequence(from: Long): Sequence<Long> = sequenceOnCalendar(from) { add(
 fun hoursOfDay(from: Long): Sequence<Long> = toTheEndOfTheDay(from) { add(Calendar.HOUR_OF_DAY, 1) }
 
 inline fun toTheEndOfTheDay(from: Long, crossinline step: Calendar.() -> Unit): Sequence<Long> = sequenceOnMutable(
-        init = { with(calendar(from)) { Pair(this, this.get(Calendar.DAY_OF_MONTH)) } },
+        init = {
+            val c = calendar(from)
+            Pair(c, c.get(Calendar.DAY_OF_MONTH))},
         out = { first.timeInMillis },
         hasNext = { first.get(Calendar.DAY_OF_MONTH) == second },
         step = { first.step() }

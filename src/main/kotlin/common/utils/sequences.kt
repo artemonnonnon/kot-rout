@@ -36,7 +36,7 @@ class MergedIterator<T>(a: Iterator<T>, b: Iterator<T>, val compare: (a: T, b: T
         else -> {
             val i = compare(ai.lookNext(), bi.lookNext())
             when {
-                i > 0 ->  bi.next()
+                i > 0 -> bi.next()
                 i < 0 -> ai.next()
                 else -> {
                     ai.next(); bi.next()
@@ -72,7 +72,7 @@ inline fun <T, K> fraction(seq: Sequence<T>, crossinline f: (T) -> Sequence<K>):
     }
 }
 
-inline fun <A, B, C> combo(a: Sequence<A>, b: Sequence<B>, crossinline f: (A, B) -> C): Sequence<C> = buildSequence {
+inline fun <A, B, C> combo1_1(a: Sequence<A>, b: Sequence<B>, crossinline f: (A, B) -> C): Sequence<C> = buildSequence {
     val ai = a.iterator()
     val bi = b.iterator()
     while (ai.hasNext() && bi.hasNext()) {
@@ -80,7 +80,16 @@ inline fun <A, B, C> combo(a: Sequence<A>, b: Sequence<B>, crossinline f: (A, B)
     }
 }
 
-inline fun <T, M> sequenceOnMutable(
+inline fun <A, B, C> combo(a: Sequence<A>, b: Sequence<B>, crossinline f: (A, B) -> C): Sequence<C> = Sequence {
+    object : Iterator<C> {
+        val ai = a.iterator()
+        val bi = b.iterator()
+        override fun hasNext(): Boolean = ai.hasNext() && bi.hasNext()
+        override fun next(): C = f(ai.next(), bi.next())
+    }
+}
+
+inline fun <T, M> sequenceOnMutable1_1(
         crossinline init: () -> M,
         crossinline out: M.() -> T,
         crossinline hasNext: M.() -> Boolean,
@@ -89,5 +98,19 @@ inline fun <T, M> sequenceOnMutable(
     while (mutable.hasNext()) {
         yield(mutable.out())
         mutable.step()
+    }
+}
+
+inline fun <T, M> sequenceOnMutable(
+        crossinline init: () -> M,
+        crossinline out: M.() -> T,
+        crossinline hasNext: M.() -> Boolean,
+        crossinline step: M.() -> Unit): Sequence<T> = Sequence {
+    object : Iterator<T> {
+        val mutable = init()
+        override fun hasNext(): Boolean = mutable.hasNext()
+        override fun next(): T {
+            return mutable.out().apply { mutable.step() }
+        }
     }
 }

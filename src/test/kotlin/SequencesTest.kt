@@ -1,3 +1,6 @@
+import common.utils.combo
+import common.utils.combo1_1
+import common.utils.const
 import common.utils.merge
 import org.junit.Test
 import org.junit.Assert.*
@@ -19,6 +22,14 @@ class SequencesTest {
         assertSequenceEquals(seq(), merge(seq<Int>(), seq<Int>()))
         assertSequenceEquals(seq(1, 2, 2, 3), merge(seq(1, 2, 2), seq(2, 3)))
         assertSequenceEquals(seq(1, 2, 3, 2, 4, 8), merge(seq(2, 4, 8), seq(1, 3, 2))) //
+    }
+
+    @Test fun testCombo() {
+        assertSequenceEquals(seq(2, 4, 6), combo(seq(1, 2, 3), const(2), {a, b -> a * b}))
+        assertSequenceEquals(seq(Pair(1, "a"), Pair(2, "b"), Pair(3, "c")), combo(seq(1, 2, 3), seq("a", "b", "c"), ::Pair))
+
+        assertSequenceEquals(seq(2, 4, 6), combo1_1(seq(1, 2, 3), const(2), {a, b -> a * b}))
+        assertSequenceEquals(seq(Pair(1, "a"), Pair(2, "b"), Pair(3, "c")), combo1_1(seq(1, 2, 3), seq("a", "b", "c"), ::Pair))
     }
 
     fun <T> seq(vararg elements: T): Sequence<T> = sequenceOf(*elements)
