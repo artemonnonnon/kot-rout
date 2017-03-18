@@ -20,6 +20,7 @@ class SequencesTest {
     @Test fun testMerge() {
         assertSequenceEquals(seq(0, 1, 2, 4, 8, 12, 41), merge(seq(1, 4, 8), seq(0, 1, 2, 8, 12, 41)))
         assertSequenceEquals(seq(), merge(seq<Int>(), seq<Int>()))
+        assertSequenceEquals(seq(1), merge(seq(1), seq<Int>()))
         assertSequenceEquals(seq(1, 2, 2, 3), merge(seq(1, 2, 2), seq(2, 3)))
         assertSequenceEquals(seq(1, 2, 3, 2, 4, 8), merge(seq(2, 4, 8), seq(1, 3, 2))) //
     }

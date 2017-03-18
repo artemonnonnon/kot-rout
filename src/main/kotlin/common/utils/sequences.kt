@@ -16,54 +16,37 @@ inline fun <T> sequence(first: T?, crossinline next: (T) -> T?): Sequence<T> = b
     }
 }
 
-fun <T> Iterator<T>.nextOrNull(): T? = if (hasNext()) next() else null
-
 fun <T> merge(a: Sequence<T>, b: Sequence<T>, compare: (a: T, b: T) -> Int): Sequence<T> = Sequence {
     MergedIterator(a.iterator(), b.iterator(), compare)
 }
 
 fun <T : Comparable<T>> merge(a: Sequence<T>, b: Sequence<T>): Sequence<T> = merge(a, b, { a, b -> a.compareTo(b) })
 
-class MergedIterator<T>(a: Iterator<T>, b: Iterator<T>, val compare: (a: T, b: T) -> Int) : Iterator<T> {
+class MergedIterator<T>(a: Iterator<T>, b: Iterator<T>, val compare: (T, T) -> Int) : Iterator<T> {
     val ai = LookForwardIterator(a)
     val bi = LookForwardIterator(b)
-
     override fun hasNext(): Boolean = ai.hasNext() || bi.hasNext()
-
     override fun next(): T = when {
-        !ai.hasNext() -> bi.next()
-        !bi.hasNext() -> ai.next()
-        else -> {
-            val i = compare(ai.lookNext(), bi.lookNext())
+        ai.hasNext() && bi.hasNext() -> with(compare(ai.lookNext(), bi.lookNext())) {
             when {
-                i > 0 -> bi.next()
-                i < 0 -> ai.next()
+                this > 0 -> bi.next()
+                this < 0 -> ai.next()
                 else -> {
                     ai.next(); bi.next()
                 }
             }
         }
+        !ai.hasNext() -> bi.next()
+        !bi.hasNext() -> ai.next()
+        else -> throw NoSuchElementException()
     }
 }
 
 class LookForwardIterator<out T>(val i: Iterator<T>) : Iterator<T> {
-
     private var nextNext: T? = null
-
     override fun hasNext(): Boolean = nextNext != null || i.hasNext()
-
-    override fun next(): T = when (nextNext) {
-        null -> i.next()
-        else -> nextNext.apply { nextNext = null }!!
-    }
-
-    fun lookNext(): T = when {
-        nextNext != null -> nextNext!!
-        else -> {
-            nextNext = i.next()
-            nextNext!!
-        }
-    }
+    override fun next(): T = nextNext.apply { nextNext = null } ifNull { i.next() }
+    fun lookNext(): T = nextNext ifNull { nextNext = i.next(); nextNext!! }
 }
 
 inline fun <T, K> fraction(seq: Sequence<T>, crossinline f: (T) -> Sequence<K>): Sequence<K> = buildSequence {
